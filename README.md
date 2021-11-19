@@ -22,13 +22,18 @@ _This project is for personal usage._
 cockroach start-single-node --advertise-addr 'localhost' --insecure
 ```
 
-1. Compile this demo project with ``mvn``:
+1. Load the dataset with provided sql file:
+```bash
+cat src/main/resources/dbinit.sql | cockroach sql --url="postgresql://root@Janes-MacBook-Pro.local:26257?sslmode=disable"
+```
+
+2. Compile this demo project with ``mvn``:
 ```bash
 mvn clean package 
 ```
-And if it runs successfully, it will create a ``jar`` file with path ``target/demoConnect-1.0-SNAPSHOT.jar``.
+  And if it runs successfully, it will create a ``jar`` file with path ``target/demoConnect-1.0-SNAPSHOT.jar``.
 
-2. Make sure the CockroachDB server is still running, and run this java program with
+3. Make sure the CockroachDB server is still running, and run this java program with
 ```bash
 java -cp target/demoConnect-1.0-SNAPSHOT.jar jane.demo.connect.App
 ```
