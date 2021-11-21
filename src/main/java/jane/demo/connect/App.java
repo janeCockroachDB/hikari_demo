@@ -1,19 +1,35 @@
 package jane.demo.connect;
 
+import org.postgresql.util.PSQLException;
+
 import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class App 
 {
-    public static void main( String[] args )
-    {
-        System.out.println( "Hello World jane!" );
+    public static void main( String[] args ) throws InterruptedException {
+        System.out.println("Please start a cockroach server with `cockroach start-single-node --advertise-addr 'localhost' --insecure`" );
+        // To set drain_wait and query_wait, do
+        // cockroach sql --url="postgresql://root@Janes-MacBook-Pro.local:26257?sslmode=disable" -e " SET CLUSTER SETTING server.shutdown.drain_wait = '10s';"
+        // and
+        // cockroach sql --url="postgresql://root@Janes-MacBook-Pro.local:26257?sslmode=disable" -e " SET CLUSTER SETTING server.shutdown.query_wait = '30s';"
         try {
+            DataSource.printConnectionPool();
             fetchData();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void printCurrentTime() {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        LocalDateTime now = LocalDateTime.now();
+        System.out.println(dtf.format(now));
+        System.out.println("\n");
     }
 
     public static void printResultSet(ResultSet resultSet) throws SQLException {
@@ -29,26 +45,34 @@ public class App
         }
     }
 
-    public static void fetchData() throws SQLException {
-        try (Connection con = DataSource.getConnection();
-             ) {
+    public static void fetchData() throws SQLException, InterruptedException {
             int i = 0;
             while (true) {
+                Connection con = DataSource.getConnection();
                 System.out.printf("pls %d th input the query:", i);
                 Scanner scanner = new Scanner(System.in);
                 String inputQuery = scanner.nextLine();
+                //inputQuery = "select 1;";
+                // Example: SELECT 1;
+//                String inputQuery = "select 1;";
                 if (inputQuery.equals("\\q")) break;
                 PreparedStatement pst = con.prepareStatement( inputQuery );
-                ResultSet rs = pst.executeQuery();
-                printResultSet(rs);
+                printCurrentTime();
+                System.out.printf("QUERY: %s", inputQuery);
+
+                try {
+                    ResultSet rs = pst.executeQuery();
+                    printResultSet(rs);
+                } catch (SQLException e) {
+                    System.out.println(e);
+                }
+
                 i++;
-                int sleepTime = 1;
-                System.out.printf("\nsleep fpr %d seconds\n", sleepTime);
-                TimeUnit.SECONDS.sleep(sleepTime);
+                con.close();
+                int secsleepTime = 600;
+                System.out.printf("\nsleep fpr %d milliseconds\n", secsleepTime);
+                TimeUnit.MILLISECONDS.sleep(secsleepTime);
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 }
 
